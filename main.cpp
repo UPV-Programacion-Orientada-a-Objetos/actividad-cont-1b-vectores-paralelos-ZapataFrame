@@ -30,6 +30,7 @@ int get_float_int_input(std::string prompt);
 std::string get_string_input(std::string prompt);
 
 int get_index_by_code(int code);
+int get_index_by_ubication(std::string ubication);
 
 int get_highest_price_product_index();
 int get_lowest_price_product_index();
@@ -490,6 +491,10 @@ int get_index_by_code(int code)
 {
     return find_int_in_array(code, codes, elementCount);
 }
+int get_index_by_ubication(std::string ubication)
+{
+    return find_string_in_array(ubication, ubications, elementCount);
+}
 
 /**
  * Regresa el indice del producto con el precio mas alto.
@@ -696,7 +701,10 @@ void load_data_from_file(std::string file_path)
 
             prices[products_loaded] = std::stof(temp); // parse to float
 
-            getline(ss_line, ubications[products_loaded], FILE_DELIMITER); // get ubicationss
+            getline(ss_line, temp, FILE_DELIMITER); // get ubicationss
+            if (find_string_in_array(temp, ubications, products_loaded) != -1)
+                throw std::invalid_argument("Contiene una ubicacion ya ingresado.");
+            ubications[products_loaded] = temp;
             products_loaded++;
         }
         catch (std::exception &e)
@@ -809,19 +817,22 @@ void register_new_product()
 
     std::cout << "Ingrese el stock" << std::endl;
 
-    int stock;
-    do
-    {
-        stock = get_positive_int_input("Stock:");
-        if (stock < 0)
-            print_message("Error", "Debe ingresar un número positivo");
-    } while (stock < 0);
+    int stock = get_positive_int_input("Stock:");
 
     std::cout << "Ingrese el precio" << std::endl;
     float price = get_positive_float_input("Price:");
 
-    std::cout << "Ingrese la ubicacion" << std::endl;
-    std::string ubication = get_string_input("Ubicacion:");
+    std::string ubication;
+    do
+    {
+        std::cout << "Ingrese la ubicacion" << std::endl;
+        ubication = get_string_input("Ubicacion:");
+        if (get_index_by_ubication(ubication) != -1)
+        {
+            print_message("Error", "Ya existe un producto con esta ubicacion. Ingrese otra.");
+        }
+        
+    } while (get_index_by_ubication(ubication) != -1);
 
     int new_index = elementCount;
     if (new_index < 0)
