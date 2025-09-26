@@ -5,48 +5,63 @@
 
 // Prototypes
 int get_menu_option();
+
+// options
 void consult_product();
 void update_inventory();
 void update_inventory_by_ubication();
 void products_report();
+void register_new_product();
 void products_stock_report();
 void highest_price_product();
 void lowest_price_product();
-void register_new_product();
 
 // files methods
-void load_data_from_file();
-void save_data_to_file();
+void create_file(std::string path);
+void load_data_from_file(std::string file_path);
+void save_data_to_file(std::string file_path);
 
+// methods
 void print_index(int index);
-int get_int_input(std::string prompt);
-float get_float_input(std::string prompt);
-int get_index_by_code(int code);
-int get_highest_price_product_index();
-int get_lowest_price_product_index();
 void wait_enter();
 
+int get_int_input(std::string prompt);
+std::string get_string_input(std::string prompt);
+float get_float_input(std::string prompt);
+
+int get_index_by_code(int code);
+
+int get_highest_price_product_index();
+int get_lowest_price_product_index();
+
+// Auxiliares
 int find_int_in_array(int element, int *array, int size);
 int find_string_in_array(std::string element, std::string *array, int size);
+
 int get_highest_in_array(float *array, int size);
 int get_highest_in_array(int *array, int size);
+
 int get_lowest_in_array(float *array, int size);
 
-// Constantes
-char FILE_DELIMITER = ',';
-std::string FILE_PATH = "./data/inventario.txt";
+// Messages
+void print_message(std::string type, std::string message);
+
+// Constantes archivos
+const char FILE_DELIMITER = ',';
+const std::string FILE_PATH = "./data/inventario.txt";
+const int MAX_ELEMENTS = 100;
 
 // Variables Globales
 int elementCount = 0;
-int codes[100];
-std::string names[100];
-int stocks[100];
-float prices[100];
-std::string ubications[100];
+int codes[MAX_ELEMENTS];
+std::string names[MAX_ELEMENTS];
+int stocks[MAX_ELEMENTS];
+float prices[MAX_ELEMENTS];
+std::string ubications[MAX_ELEMENTS];
 
 int main()
 {
-    load_data_from_file();
+    load_data_from_file(FILE_PATH);
     std::cout << "\n--- Ferreteria \"El Martillo\" ---" << std::endl;
     bool is_program_running = true; // variable centinela
 
@@ -81,9 +96,10 @@ int main()
             lowest_price_product();
             break;
         case 0:
-            std::cout << "Bye!" << std::endl;
             is_program_running = false;
-            save_data_to_file(); // guarda los valores
+            save_data_to_file(FILE_PATH); // guarda los valores
+            std::cout << "Bye!" << std::endl;
+            exit(EXIT_SUCCESS);
             break;
         default:
             std::cout << "Esta opcion no existe. . ." << std::endl;
@@ -123,9 +139,9 @@ int get_menu_option()
     // Validar opcion
     do
     {
-        opt = get_int_input("Seleccione una opción [1-9]:");
+        opt = get_int_input("Seleccione una opción [0-8]:");
 
-        if (opt >= 0 && opt <= 9)
+        if (opt >= 0 && opt <= 8)
         {
             valid_input = true; // Si es una opcion valida salir
         }
@@ -192,15 +208,17 @@ void update_inventory()
 void update_inventory_by_ubication()
 {
     std::cout << "\n--- Actualizar inventario (ubication version) ---" << std::endl;
-    std::string ubication;
     std::cout << "Ingresa la ubicacion del producto a actualizar" << std::endl;
-    std::cin >> ubication;
+    std::string ubication = get_string_input("Ubicacion:");
+
     int index = find_string_in_array(ubication, ubications, elementCount);
+
     if (index == -1) // si no se encontro producto
     {
         std::cout << "Producto con codigo no encontrado" << std::endl;
         return;
     }
+
     std::cout << "Producto: " << names[index] << " Stock actual: " << stocks[index] << std::endl;
     std::cout << "Ingresa la cantidad a incrementar o decrementar (Numero positivo o negativo)" << std::endl;
     int quantity = get_int_input("cantidad:");
@@ -277,9 +295,9 @@ void products_stock_report()
             // Make Row
             std::cout << "|";
             std::cout << std::left << std::setw(10) << codes[i] << "|";
-            std::cout << std::left << std::setw(40) << names[i] << "|";
+            std::cout << std::left << std::setw(30) << names[i] << "|";
             std::cout << std::right << std::setw(10) << stocks[i] << "|";
-            std::cout << std::right << std::setw(1) << "$" << std::setw(9) << std::fixed << std::setprecision(2) << prices[i] << "|" << std::endl;
+            std::cout << std::right << std::setw(1) << "$" << std::setw(9) << std::fixed << std::setprecision(2) << prices[i] << "|";
             std::cout << std::right << std::setw(9) << std::fixed << std::setprecision(2) << ubications[i] << "|" << std::endl;
         }
     }
@@ -345,6 +363,13 @@ int get_int_input(std::string prompt)
 
         valid_input = true;
     } while (!valid_input);
+    return input;
+}
+std::string get_string_input(std::string prompt)
+{
+    std::string input;
+    std::cout << prompt;
+    std::getline(std::cin, input);
     return input;
 }
 
@@ -427,6 +452,7 @@ void print_index(int index)
     std::cout << "│ Nombre:" << names[index] << std::endl;
     std::cout << "│ Stock:" << stocks[index] << std::endl;
     std::cout << "│ Precio:" << prices[index] << std::endl;
+    std::cout << "│ Ubicacion:" << ubications[index] << std::endl;
     std::cout << "└─────────────────────────────────────────┘" << std::endl;
 }
 
@@ -526,22 +552,36 @@ int get_number_lines(std::ifstream &file)
     return counter;
 }
 
-void load_data_from_file()
+void load_data_from_file(std::string file_path)
 {
-
-    std::ifstream file(FILE_PATH);
-    elementCount = get_number_lines(file) - 1;
-
-    std::string temp;
-    std::string line;
-    std::getline(file, line); // leemos primera linea para quitar el header
+    std::ifstream file(file_path);
+    print_message("Info", "Intentando abrir el archivo: " + file_path);
 
     if (!file.is_open())
     {
-        std::cout << "[warning] No se pudo cargar inventario, se creara un nuevo archivo. (Los archivos estan en el data, y debe llevar el nombre de invenario.txt)" << std::endl;
+        print_message("Warning", "No se pudo cargar inventario, se creara un nuevo archivo.");
+        create_file(file_path);
+        print_message("Info", "Archivo creado: " + file_path);
+        file.open(file_path);
     }
-    for (int i = 0; i < elementCount; i++)
+
+    int number_lines = get_number_lines(file);
+    if (number_lines > MAX_ELEMENTS)
     {
+        print_message("Error", "No se pudo cargar inventario, se exedio el numero de elementos. Maximo de elementos:" + std::to_string(MAX_ELEMENTS));
+        exit(EXIT_FAILURE);
+        return;
+    }
+
+    std::string line;
+    std::getline(file, line); // leemos primera linea para quitar el header
+
+    int products_loaded = 0;
+    int products_ommited = 0;
+    for (int i = 0; i < number_lines - 1; i++)
+    {
+        // sanitizar y validar datos
+
         std::getline(file, line);
         std::string temp; // string auxiliar para el parse de int
         std::stringstream ss_line(line);
@@ -558,36 +598,71 @@ void load_data_from_file()
         prices[i] = std::stof(temp);            // parse to float
 
         getline(ss_line, ubications[i], FILE_DELIMITER); // get ubications
+        products_loaded++;
     }
+
+    elementCount += products_loaded;
+    print_message("Info", "Numero de productos cargados: " + std::to_string(products_loaded));
+    print_message("Info", "Numero de productos omitidos: " + std::to_string(products_ommited));
 }
 
-void save_data_to_file()
+void save_data_to_file(std::string file_path)
 {
 
     // ingresamos el header
     std::string header = "Código,Nombre,Cantidad,Precio,Ubicación\n";
-    std::ofstream outfile(FILE_PATH, std::ofstream::binary);
+    std::ofstream outfile(file_path);
+
+    if (!outfile)
+    {
+        print_message("Error", "Archivo de guardado inaccesible en la ruta: " + file_path + "\nSi desea guardar los datos correctamente actualice los permisos y después presione enter.");
+        // print_message("Info", "Si desea guardar los datos correctamente actualice los permisos y después presione enter.");
+        wait_enter();
+        create_file(file_path);
+    }
 
     // write to outfile
     outfile.write(header.c_str(), header.size());
     for (int i = 0; i < elementCount; i++)
     {
-        std::string aux;
-        std::stringstream StrStream;
-        StrStream << codes[i] << "," << names[i] << "," << stocks[i] << "," << std::to_string(prices[i]) << "," << ubications[i] + "\n";
-        aux = StrStream.str();
-        outfile.write(aux.c_str(), aux.size());
-        std::cout << "[info] Datos Guardados correctamente" << std::endl;
-    }
+        // formatear linea
+        std::string line = "";
+        line.append(std::to_string(codes[i]) + FILE_DELIMITER);  // agregar codigo
+        line.append(names[i] + FILE_DELIMITER);                  // agregar nombre
+        line.append(std::to_string(stocks[i]) + FILE_DELIMITER); // agregar stock
+        line.append(std::to_string(prices[i]) + FILE_DELIMITER); // agregar precio
+        line.append(ubications[i]);                              // agregar ubicacion
+        line.append("\n");                                       // new line
 
+        // escribir linea
+        outfile.write(line.c_str(), line.size());
+    }
     outfile.close();
+    print_message("Info", "Datos guardados correctamente.");
+}
+
+/**
+ * Funcion para crear un archivo a partir de una ruta.
+ * @param path String de ruta con nombre y extension. Ej './data/example.txt'.
+ */
+void create_file(std::string path)
+{
+    print_message("Info", "Intentando crear el archivo: " + path);
+    std::ofstream new_file(path);
+    if (!new_file)
+    {
+        print_message("Error", "No se pudo crear el archivo. Verifique los permisos.");
+        exit(EXIT_FAILURE);
+        return;
+    }
+    new_file.close();
 }
 
 void register_new_product()
 {
-    if (elementCount >= 100)
+    if (elementCount >= MAX_ELEMENTS)
     {
-        std::cout << "=== Maximo de elementos alcanzados === " << std::endl;
+        print_message("Error", "Operacion no permitida; Maximo de elementos alcanzados. Maximo de elementos:" + std::to_string(MAX_ELEMENTS));
         return;
     }
 
@@ -599,24 +674,22 @@ void register_new_product()
         code = get_int_input("codigo:");
         if (get_index_by_code(code) != -1)
         {
-            std::cout << "=== ya hay un producto con ese codigo === " << std::endl;
+            print_message("Error", "Ya existe un producto con este codigo. Ingrese otro.");
         }
+
     } while (get_index_by_code(code) != -1);
 
     std::cout << "Ingrese el nombre" << std::endl;
-    std::cout << "nombre:";
-    std::string nombre;
-    std::cin >> nombre;
+    std::string name = get_string_input("Nombre:");
 
     std::cout << "Ingrese el stock" << std::endl;
     int stock = get_int_input("Stock:");
+
     std::cout << "Ingrese el precio" << std::endl;
     float price = get_float_input("Price:");
 
     std::cout << "Ingrese la ubicacion" << std::endl;
-    std::cout << "ubicacion:";
-    std::string ubicacion;
-    std::cin >> ubicacion;
+    std::string ubication = get_string_input("Ubicacion:");
 
     int new_index = elementCount;
     if (new_index < 0)
@@ -625,12 +698,21 @@ void register_new_product()
     }
 
     codes[new_index] = code;
-    names[new_index] = nombre;
+    names[new_index] = name;
     stocks[new_index] = stock;
     prices[new_index] = price;
-    ubications[new_index] = ubicacion;
+    ubications[new_index] = ubication;
     elementCount++; // se incrementa el contador de elementos
 
-    std::cout << "Producto registrado satisfactoriamente" << std::endl;
-    std::cout << "El index es: " << new_index << std::endl;
+    print_message("Info", "Producto nuevo registrado correctamente.");
+}
+
+/**
+ * Funcion para mostrar un mensaje formateado.
+ * @param type Tipo de mensaje Ej Warning, Error, Info.
+ * @param message Mensaje a mostrar.
+ */
+void print_message(std::string type, std::string message)
+{
+    std::cout << "[" << type << "]\t" << message << std::endl;
 }

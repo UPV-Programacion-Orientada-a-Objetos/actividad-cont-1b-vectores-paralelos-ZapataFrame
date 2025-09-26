@@ -1,7 +1,7 @@
 Código,Nombre,Cantidad,Precio,Ubicación
-101,Martillo de bola,50,15.50,A-01
-102,Destornillador Phillips,120,8.75,A-02
-103,Cinta métrica 5m,75,20.00,B-01
+101,Martillo de bola
+102,Destornillador Phillips
+103,Cinta métrica 5m
 104,Llave inglesa 10",45,25.99,B-02
 105,Taladro inalámbrico,8,120.00,C-01
 106,Tornillos para madera (caja),200,5.25,D-01
