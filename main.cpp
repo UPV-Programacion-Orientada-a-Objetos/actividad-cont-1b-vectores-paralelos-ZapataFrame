@@ -1,7 +1,8 @@
 #include <iostream>
-#include <iomanip> // Libreria para manejar mejor la IO de la consola
-#include <fstream> // Libreria para manipular el flujo de archivos
-#include <sstream> // Libreria para manejar strings como flujo.
+#include <iomanip>   // Libreria para manejar mejor la IO de la consola.
+#include <fstream>   // Libreria para manipular el flujo de archivos
+#include <sstream>   // Libreria para manejar strings como flujo.
+#include <stdexcept> // Libreria para crear exceptiones.
 
 // Prototypes
 int get_menu_option();
@@ -26,8 +27,10 @@ void print_index(int index);
 void wait_enter();
 
 int get_int_input(std::string prompt);
-std::string get_string_input(std::string prompt);
+int get_positive_int_input(std::string prompt);
 float get_float_input(std::string prompt);
+int get_float_int_input(std::string prompt);
+std::string get_string_input(std::string prompt);
 
 int get_index_by_code(int code);
 
@@ -42,6 +45,11 @@ int get_highest_in_array(float *array, int size);
 int get_highest_in_array(int *array, int size);
 
 int get_lowest_in_array(float *array, int size);
+
+int count_values_from_splitted_string(std::string string, char delimiter);
+
+bool is_int(std::string string);
+bool is_float(std::string string);
 
 // Messages
 void print_message(std::string type, std::string message);
@@ -62,7 +70,7 @@ std::string ubications[MAX_ELEMENTS];
 int main()
 {
     load_data_from_file(FILE_PATH);
-    std::cout << "\n--- Ferreteria \"El Martillo\" ---" << std::endl;
+    std::cout << "\n--- Bienvenido al Sistema de Inventario de \"El Martillo\" ---" << std::endl;
     bool is_program_running = true; // variable centinela
 
     while (is_program_running)
@@ -124,12 +132,12 @@ int get_menu_option()
     std::cout << "│ 2) Actualizar inventario" << std::endl;
     std::cout << "│ 3) Generar reporte completo" << std::endl;
     std::cout << "│ 4) Encontrar el producto más caro" << std::endl;
-    std::cout << "│ 0) Salir" << std::endl;
-    std::cout << "│ ===== ¡¡¡ Nuevas implementaciones !!! ===== " << std::endl;
+    std::cout << "├─────────────────────────────────────────" << std::endl;
     std::cout << "│ 5) Registrar nuevo producto" << std::endl;
     std::cout << "│ 6) Actualizar inventario por ubicacion" << std::endl;
     std::cout << "│ 7) Generar reporte de bajo stock" << std::endl;
     std::cout << "│ 8) Encontrar el producto más barato" << std::endl;
+    std::cout << "│ 0) Guardar y salir" << std::endl;
     std::cout << "└─────────────────────────────────────────┘" << std::endl;
 
     // obtener opcion desde input
@@ -274,7 +282,9 @@ void products_report()
 void products_stock_report()
 {
     std::cout << "\n--- Reporte de bajo stock ---" << std::endl;
+    std::cout << "Ingresa el umbral, solo se mostraran productos con menor stock que el umbral" << std::endl;
 
+    int umbral = get_positive_int_input("Umbral:");
     // Table Header
     std::cout << "┌───────────────────────────────────────────────────────────────────────────┐" << std::endl;
     std::cout << "|";
@@ -290,7 +300,7 @@ void products_stock_report()
     for (int i = 0; i < elementCount; i++)
     {
         // solo mostrar los que sean menores a 10 en el stock
-        if (stocks[i] < 10)
+        if (stocks[i] < umbral)
         {
             // Make Row
             std::cout << "|";
@@ -302,7 +312,7 @@ void products_stock_report()
         }
     }
     // Table footer
-    std::cout << "└───────────────────────────────────────────────────────────────┘" << std::endl;
+    std::cout << "└───────────────────────────────────────────────────────────────────────────┘" << std::endl;
 
     std::cout << "--- Fin del Reporte stock ---" << std::endl;
 }
@@ -351,13 +361,13 @@ int get_int_input(std::string prompt)
             }
             catch (std::out_of_range e) // validar rango de numero (rango -2,147,483,648 / 2,147,483,647)
             {
-                std::cout << "[Error] Debe ingresar un número de menor tamaño" << std::endl;
+                print_message("Error", "Debe ingresar un número de menor tamaño.");
                 continue;
             }
         }
         catch (std::invalid_argument e) // Validar numeros
         {
-            std::cout << "[Error] Debe ingresar un número" << std::endl;
+            print_message("Error", "Debe ingresar un número");
             continue;
         }
 
@@ -365,11 +375,44 @@ int get_int_input(std::string prompt)
     } while (!valid_input);
     return input;
 }
+
+int get_positive_int_input(std::string prompt)
+{
+    int input;
+    do
+    {
+        input = get_int_input(prompt);
+        if (input < 0)
+        {
+            print_message("Error", "Debe ingresar un número positivo.");
+        }
+
+    } while (input < 0);
+    return input;
+}
 std::string get_string_input(std::string prompt)
 {
     std::string input;
-    std::cout << prompt;
-    std::getline(std::cin, input);
+    bool valid_input = true;
+    do
+    {
+        valid_input = true;
+        std::cout << prompt;
+        std::getline(std::cin, input);
+
+        if (input.find(",") != std::string::npos)
+        {
+            print_message("Error", "No se puede utilizar el caracter ('," + std::to_string(FILE_DELIMITER) + "').");
+            valid_input = false;
+        }
+        if (input.empty())
+        {
+            print_message("Error", "Se debe ingresar texto");
+            valid_input = false;
+        }
+
+    } while (!valid_input);
+
     return input;
 }
 
@@ -393,20 +436,34 @@ float get_float_input(std::string prompt)
             {
                 input = std::stof(temp);
             }
-            catch (std::out_of_range e) // validar rango de numero (rango -2,147,483,648 / 2,147,483,647)
+            catch (std::out_of_range e) // validar rango de numero (rango ±3.4E +/- 38)
             {
-                std::cout << "[Error] Debe ingresar un número de menor tamaño" << std::endl;
+                print_message("Error", "Debe ingresar un número de menor tamaño.");
                 continue;
             }
         }
         catch (std::invalid_argument e) // Validar numeros
         {
-            std::cout << "[Error] Debe ingresar un número" << std::endl;
+            print_message("Error", "Debe ingresar un número");
             continue;
         }
 
         valid_input = true;
     } while (!valid_input);
+    return input;
+}
+float get_positive_float_input(std::string prompt)
+{
+    float input;
+    do
+    {
+        input = get_float_input(prompt);
+        if (input < 0)
+        {
+            print_message("Error", "Debe ingresar un número positivo.");
+        }
+
+    } while (input < 0);
     return input;
 }
 
@@ -462,7 +519,8 @@ void print_index(int index)
 void wait_enter()
 {
     std::cout << "[Enter to continue . . .]";
-    std::getchar();
+    std::string temp;
+    getline(std::cin, temp);
 }
 
 /**
@@ -573,37 +631,82 @@ void load_data_from_file(std::string file_path)
         return;
     }
 
-    std::string line;
-    std::getline(file, line); // leemos primera linea para quitar el header
-
     int products_loaded = 0;
     int products_ommited = 0;
-    for (int i = 0; i < number_lines - 1; i++)
+
+    std::string line;
+    for (int i = 1; i <= number_lines; i++)
     {
-        // sanitizar y validar datos
-
+        std::string error_message;
+        int field;
         std::getline(file, line);
-        std::string temp; // string auxiliar para el parse de int
-        std::stringstream ss_line(line);
 
-        getline(ss_line, temp, FILE_DELIMITER); // get code
-        codes[i] = std::stoi(temp);             // parse to int
+        // validar datos
+        try
+        {
+            int values_count = count_values_from_splitted_string(line, FILE_DELIMITER);
 
-        getline(ss_line, names[i], FILE_DELIMITER); // get name
+            if (values_count != 5)
+                throw std::invalid_argument("No contiene todos los valores necesarios.");
 
-        getline(ss_line, temp, FILE_DELIMITER); // get quantity
-        stocks[i] = std::stoi(temp);            // parse to int
+            std::string temp; // string auxiliar para el parse
+            std::stringstream ss_line(line);
 
-        getline(ss_line, temp, FILE_DELIMITER); // get price
-        prices[i] = std::stof(temp);            // parse to float
+            getline(ss_line, temp, FILE_DELIMITER); // get code
 
-        getline(ss_line, ubications[i], FILE_DELIMITER); // get ubications
-        products_loaded++;
+            if (!is_int(temp))
+                throw std::invalid_argument("Contiene un valor no int en el codigo.");
+
+            if (find_int_in_array(std::stoi(temp), codes, products_loaded) != -1)
+                throw std::invalid_argument("Contiene un codigo ya ingresado.");
+
+            codes[products_loaded] = std::stoi(temp); // parse to int
+
+            getline(ss_line, names[products_loaded], FILE_DELIMITER); // get name
+
+            getline(ss_line, temp, FILE_DELIMITER); // get quantity
+
+            if (!is_int(temp))
+                throw std::invalid_argument("Contiene un valor no int en el stock.");
+
+            if (std::stoi(temp) < 0)
+                throw std::invalid_argument("Contiene un valor negativo en el stock.");
+
+            stocks[products_loaded] = std::stoi(temp); // parse to int
+
+            getline(ss_line, temp, FILE_DELIMITER); // get price
+            if (!is_float(temp))
+                throw std::invalid_argument("Contiene un valor no float en el precio.");
+
+            if (std::stoi(temp) < 0)
+                throw std::invalid_argument("Contiene un valor negativo en el precio.");
+
+            prices[products_loaded] = std::stof(temp); // parse to float
+
+            getline(ss_line, ubications[products_loaded], FILE_DELIMITER); // get ubicationss
+            products_loaded++;
+        }
+        catch (std::exception &e)
+        {
+            print_message("Warning", "Se omitio la linea numero " + std::to_string(i) + " debido a que " + e.what());
+        }
     }
-
+    products_ommited = number_lines - products_loaded;
     elementCount += products_loaded;
     print_message("Info", "Numero de productos cargados: " + std::to_string(products_loaded));
     print_message("Info", "Numero de productos omitidos: " + std::to_string(products_ommited));
+}
+
+int count_values_from_splitted_string(std::string string, char delimiter)
+{
+    std::stringstream ss_line(string);
+    std::string aux;
+    int count = 0;
+    while (getline(ss_line, aux, delimiter))
+    {
+        count++;
+    }
+    return count;
 }
 
 void save_data_to_file(std::string file_path)
@@ -683,10 +786,17 @@ void register_new_product()
     std::string name = get_string_input("Nombre:");
 
     std::cout << "Ingrese el stock" << std::endl;
-    int stock = get_int_input("Stock:");
+
+    int stock;
+    do
+    {
+        stock = get_positive_int_input("Stock:");
+        if (stock < 0)
+            print_message("Error", "Debe ingresar un número positivo");
+    } while (stock < 0);
 
     std::cout << "Ingrese el precio" << std::endl;
-    float price = get_float_input("Price:");
+    float price = get_positive_float_input("Price:");
 
     std::cout << "Ingrese la ubicacion" << std::endl;
     std::string ubication = get_string_input("Ubicacion:");
@@ -715,4 +825,40 @@ void register_new_product()
 void print_message(std::string type, std::string message)
 {
     std::cout << "[" << type << "]\t" << message << std::endl;
+}
+
+bool is_int(std::string string)
+{
+    if (string.empty())
+    {
+        return false;
+    }
+    try
+    {
+        std::stoi(string);
+        return true;
+    }
+    catch (const std::exception &e)
+    {
+        // catch any error
+    }
+    return false;
+}
+
+bool is_float(std::string string)
+{
+    if (string.empty())
+    {
+        return false;
+    }
+    try
+    {
+        std::stof(string);
+        return true;
+    }
+    catch (const std::exception &e)
+    {
+        // catch any error
+    }
+    return false;
 }

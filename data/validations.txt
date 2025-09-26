@@ -1,14 +1,15 @@
 Código,Nombre,Cantidad,Precio,Ubicación
-101,Martillo de bola,50,15.50,A-01
-102,Destornillador Phillips,120,8.75,A-02
-103,Cinta métrica 5m,75,20.00,B-01
+101,Martillo de bola
+102,Destornillador Phillips
+103,Cinta métrica 5m
 104,Llave inglesa 10",45,25.99,B-02
 105,Taladro inalámbrico,8,120.00,C-01
 106,Tornillos para madera (caja),200,5.25,D-01
 107,Sierra de mano,30,35.75,C-02
-108,Juego de brocas para metal,60,45.00,D-02
+107,Sierra de mano,30,35.75,C-02
+108,Juego de brocas para metal,60,-45.00,D-02
 109,Lámpara de trabajo LED,90,18.50,A-03
-110,Cerradura de seguridad,25,85.00,B-03
+elpepe10,Cerradura de seguridad,25,85.00,B-03
 111,Pintura blanca 1 galón,15,55.00,E-01
 112,Brocha 2",70,7.50,E-02
 113,Rodillo para pintar,85,11.00,E-03
