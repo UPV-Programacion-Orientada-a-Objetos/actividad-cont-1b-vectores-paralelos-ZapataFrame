@@ -325,7 +325,14 @@ void highest_price_product()
     int index = get_highest_price_product_index();
     std::cout << "\n--- Producto mas caro ---" << std::endl;
 
-    std::cout << "El producto más caro es: " << names[index] << " con un precio de " << prices[index] << std::endl;
+    if (elementCount > 0)
+    {
+        std::cout << "El producto más caro es: " << names[index] << " con un precio de " << prices[index] << std::endl;
+    }
+    else
+    {
+        print_message("Info", "No hay producctos.");
+    }
 }
 
 /**
@@ -336,7 +343,14 @@ void lowest_price_product()
     int index = get_lowest_price_product_index();
     std::cout << "\n--- Producto mas barato ---" << std::endl;
 
-    std::cout << "El producto más barato es: " << names[index] << " con un precio de " << prices[index] << std::endl;
+    if (elementCount > 0)
+    {
+        std::cout << "El producto más barato es: " << names[index] << " con un precio de " << prices[index] << std::endl;
+    }
+    else
+    {
+        print_message("Info", "No hay producctos.");
+    }
 }
 
 /**
@@ -617,7 +631,7 @@ void load_data_from_file(std::string file_path)
 
     if (!file.is_open())
     {
-        print_message("Warning", "No se pudo cargar inventario, se creara un nuevo archivo.");
+        print_message("Warning", "No se pudo cargar inventario.");
         create_file(file_path);
         print_message("Info", "Archivo creado: " + file_path);
         file.open(file_path);
@@ -678,7 +692,7 @@ void load_data_from_file(std::string file_path)
             if (!is_float(temp))
                 throw std::invalid_argument("Contiene un valor no float en el precio.");
 
-            if (std::stoi(temp) < 0)
+            if (std::stof(temp) < 0)
                 throw std::invalid_argument("Contiene un valor negativo en el precio.");
 
             prices[products_loaded] = std::stof(temp); // parse to float
@@ -688,9 +702,17 @@ void load_data_from_file(std::string file_path)
         }
         catch (std::exception &e)
         {
-            print_message("Warning", "Se omitio la linea numero " + std::to_string(i) + " debido a que " + e.what());
+            if (i != 1)
+            {
+                print_message("Warning", "Se omitio la linea numero " + std::to_string(i) + " debido a que " + e.what());
+            }
+            else
+            {
+                print_message("Warning", "Se omitio la linea numero " + std::to_string(i) + " debido a que " + e.what() + " Aunque podria ser el header");
+            }
         }
     }
+    file.close();
     products_ommited = number_lines - products_loaded;
     elementCount += products_loaded;
     print_message("Info", "Numero de productos cargados: " + std::to_string(products_loaded));
