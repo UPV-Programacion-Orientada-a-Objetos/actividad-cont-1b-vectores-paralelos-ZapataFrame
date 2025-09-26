@@ -680,6 +680,11 @@ void load_data_from_file(std::string file_path)
 
             codes[products_loaded] = std::stoi(temp); // parse to int
 
+            getline(ss_line, temp, FILE_DELIMITER); // get ubications
+            if (find_string_in_array(temp, ubications, products_loaded) != -1)
+                throw std::invalid_argument("Contiene una ubicacion ya ingresado.");
+            ubications[products_loaded] = temp;
+
             getline(ss_line, names[products_loaded], FILE_DELIMITER); // get name
 
             getline(ss_line, temp, FILE_DELIMITER); // get quantity
@@ -689,6 +694,9 @@ void load_data_from_file(std::string file_path)
 
             if (std::stoi(temp) < 0)
                 throw std::invalid_argument("Contiene un valor negativo en el stock.");
+
+            if (std::stoi(temp) > 50)
+                print_message("Warning", " Hay sobre stock del producto: " + names[products_loaded] + ", debido a que es mayor de 50. ");
 
             stocks[products_loaded] = std::stoi(temp); // parse to int
 
@@ -701,10 +709,6 @@ void load_data_from_file(std::string file_path)
 
             prices[products_loaded] = std::stof(temp); // parse to float
 
-            getline(ss_line, temp, FILE_DELIMITER); // get ubicationss
-            if (find_string_in_array(temp, ubications, products_loaded) != -1)
-                throw std::invalid_argument("Contiene una ubicacion ya ingresado.");
-            ubications[products_loaded] = temp;
             products_loaded++;
         }
         catch (std::exception &e)
@@ -760,10 +764,10 @@ void save_data_to_file(std::string file_path)
         // formatear linea
         std::stringstream ss_line;
         ss_line << codes[i] << FILE_DELIMITER;                                        // codigo
+        ss_line << ubications[i] << FILE_DELIMITER;                                             // ubicacion
         ss_line << names[i] + FILE_DELIMITER;                                         // nombre
         ss_line << std::to_string(stocks[i]) << FILE_DELIMITER;                       // stock
-        ss_line << std::fixed << std::setprecision(2) << prices[i] << FILE_DELIMITER; // precio
-        ss_line << ubications[i] << "\n";                                             // ubicacion
+        ss_line << std::fixed << std::setprecision(2) << prices[i] << "\n"; // precio
 
         std::string line = ss_line.str();
 
@@ -831,7 +835,7 @@ void register_new_product()
         {
             print_message("Error", "Ya existe un producto con esta ubicacion. Ingrese otra.");
         }
-        
+
     } while (get_index_by_ubication(ubication) != -1);
 
     int new_index = elementCount;
