@@ -2,9 +2,10 @@
 #include <iomanip>   // Libreria para manejar mejor la IO de la consola.
 #include <fstream>   // Libreria para manipular el flujo de archivos
 #include <sstream>   // Libreria para manejar strings como flujo.
-#include <stdexcept> // Libreria para crear exceptiones.
+#include <stdexcept> // Libreria para crear exceptions.
 
 // Prototypes
+// menu
 int get_menu_option();
 
 // options
@@ -21,10 +22,6 @@ void lowest_price_product();
 void create_file(std::string path);
 void load_data_from_file(std::string file_path);
 void save_data_to_file(std::string file_path);
-
-// methods
-void print_index(int index);
-void wait_enter();
 
 int get_int_input(std::string prompt);
 int get_positive_int_input(std::string prompt);
@@ -53,6 +50,8 @@ bool is_float(std::string string);
 
 // Messages
 void print_message(std::string type, std::string message);
+void wait_enter();
+void print_index(int index);
 
 // Constantes archivos
 const char FILE_DELIMITER = ',';
@@ -751,13 +750,14 @@ void save_data_to_file(std::string file_path)
     for (int i = 0; i < elementCount; i++)
     {
         // formatear linea
-        std::string line = "";
-        line.append(std::to_string(codes[i]) + FILE_DELIMITER);  // agregar codigo
-        line.append(names[i] + FILE_DELIMITER);                  // agregar nombre
-        line.append(std::to_string(stocks[i]) + FILE_DELIMITER); // agregar stock
-        line.append(std::to_string(prices[i]) + FILE_DELIMITER); // agregar precio
-        line.append(ubications[i]);                              // agregar ubicacion
-        line.append("\n");                                       // new line
+        std::stringstream ss_line;
+        ss_line << codes[i] << FILE_DELIMITER;                                        // codigo
+        ss_line << names[i] + FILE_DELIMITER;                                         // nombre
+        ss_line << std::to_string(stocks[i]) << FILE_DELIMITER;                       // stock
+        ss_line << std::fixed << std::setprecision(2) << prices[i] << FILE_DELIMITER; // precio
+        ss_line << ubications[i] << "\n";                                             // ubicacion
+
+        std::string line = ss_line.str();
 
         // escribir linea
         outfile.write(line.c_str(), line.size());
@@ -846,7 +846,7 @@ void register_new_product()
  */
 void print_message(std::string type, std::string message)
 {
-    std::cout << "[" << type << "]\t" << message << std::endl;
+    std::cout << "[" << type << "] " << message << std::endl;
 }
 
 bool is_int(std::string string)
